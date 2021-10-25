@@ -3,7 +3,7 @@ import copy
 # Python3 program to solve N Queen
 # Problem using backtracking
 global N
-N = 5
+N = 11
 
 global ilegal_conf
 ilegal_conf = []
@@ -52,19 +52,18 @@ def cancelLastStep(board, row, symbol):
 
 def find_rowAndsymbol(board):
     row = 0
+    symbol = 1
     sum_ = (N * (1 + N)) / 2
     for i in range(N-1, -1, -1):
         sum_row = sum(board[i])
-        if sum_row == sum_:
-            row = i + 1
-            pass
-        elif sum_row > 0:
+        if sum_row > 0:
             row = i
-            pass
-    if row < N:
-        symbol = max(board[row]) + 1
-    else:
-        symbol = 0
+            if sum_row == sum_:
+                row += 1
+                symbol = 1
+            else:
+                symbol = max(board[row]) + 1
+            break
 
     return [row, symbol]
 
@@ -90,22 +89,13 @@ def solveNQUtil(board):
                 # Place this queen in board[i][col]
                 board[row][i] = symbol
                 # recur to place rest of the queens
-                print('[all symbols]  symbol - ', symbol, ', row - ', row)
                 if solveNQUtil(board) == True:
                     return True
                 else:
-
-
-                """
-                if symbol < N:
-                    print('[all symbols]  symbol - ', symbol, ', row - ', row)
-                    if solveNQUtil(board, empty_cells) == True:
-                        return True
-
-                print('[new row]   symbol - ', symbol, ', row - ', row)
-                if solveNQUtil(board, copy.deepcopy(list_N)) == True:
+                    while solveNQUtil(board) == False:
+                        return False
                     return True
-"""
+
                 # If placing queen in board[i][col
                 # doesn't lead to a solution, then
                 # queen from board[i][col]
@@ -122,17 +112,6 @@ def solveNQUtil(board):
             cancelLastStep(board, row - 1, N)
         else:
             cancelLastStep(board, row, symbol - 1)
-        """
-        ilegal_conf.append(copy.deepcopy(board))
-        if symbol == 1:
-           cancelLastStep(board, row - 1, N)
-           print('[error with first] symbol - ', symbol, ', row - ', row)
-           solveNQUtil(board, row - 1, copy.deepcopy(list_N))
-        else:
-            cancelLastStep(board, row, symbol - 1)
-            print('[error in row] symbol - ', symbol, ', row - ', row)
-            solveNQUtil(board, row, copy.deepcopy(list_N))
-        """
 
     return False
 
@@ -148,7 +127,6 @@ def solveNQUtil(board):
 def solveNQ():
     board = [[0 for i in range(N)] for j in range(N)]
 
-    print('first call ')
     if solveNQUtil(board) == False:
         print("Solution does not exist")
         return False
