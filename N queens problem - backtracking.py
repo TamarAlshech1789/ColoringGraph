@@ -3,7 +3,7 @@ import copy
 # Python3 program to solve N Queen
 # Problem using backtracking
 global N
-N = 5
+N = 11
 
 global ilegal_conf
 ilegal_conf = []
