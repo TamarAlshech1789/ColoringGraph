@@ -1,4 +1,5 @@
 from find_hamilton import *
+import timeit
 
 def same_vertices(edges):
     vertices = []
@@ -27,19 +28,26 @@ def print_option(options):
 
 def find_edges(colored_edges, possible_edges):
     color_option = [[edge] for edge in possible_edges]
+    op_poss_edge = [possible_edges for e in color_option]
+    for i, op in enumerate(color_option):
+        op_poss_edge[i] = remove_illegel_edges(N, op_poss_edge[i], op[0])
+
     finished = False
 
     while(finished == False):
         finished = True
         temp_color_option = []
-        for option in color_option:
-            for edge in possible_edges:
+        temp_op_poss_edges = []
+        for i, option in enumerate(color_option):
+            for edge in op_poss_edge[i]:
+            #for edge in possible_edges:
                 if not edge in option:
                     new_option = option.copy()
                     new_option.append(edge)
                     new_option.sort()
 
-                    if not new_option in temp_color_option and same_vertices(new_option):
+                    if not new_option in temp_color_option:
+                        #  and same_vertices(new_option)
                         no_small_cycles = 0
                         for exist_color in colored_edges:
                             if find_small_cycle(N, exist_color, new_option) == True:
@@ -47,9 +55,13 @@ def find_edges(colored_edges, possible_edges):
 
                         if no_small_cycles == len(colored_edges):
                             temp_color_option.append(new_option)
+                            curr_opp_edge = op_poss_edge[i].copy()
+                            curr_opp_edge = remove_illegel_edges(N, curr_opp_edge, edge)
+                            temp_op_poss_edges.append(curr_opp_edge)
                             if len(new_option) < (N/2):
                                 finished = False
         color_option = temp_color_option.copy()
+        op_poss_edge = temp_op_poss_edges.copy()
 
     print('number of option: ', len(color_option))
     print_option(color_option)
@@ -75,4 +87,7 @@ colored_edges = []
 colored_edges.append(color_1)
 colored_edges.append(color_2)
 
+start = timeit.default_timer()
 find_edges(colored_edges, all_edges)
+stop = timeit.default_timer()
+print('Runtime: ', stop - start)

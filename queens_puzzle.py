@@ -3,6 +3,7 @@ backtracking '''
 import itertools
 import sys
 import timeit
+from termcolor import colored
 
 result = []
 
@@ -213,18 +214,22 @@ def create_all_option(queens, n):
                 new_op = op.copy()
                 new_op.append(queen)
 
-                if check_queens(new_op, n) == True and:
+                if check_queens(new_op, n) == True:
                     new_all_options.append(new_op)
 
         all_options = new_all_options.copy()
 
     return all_options
 
-def merge_ordered_queens(queens, n):
+def merge_ordered_queens(queens, n, not_cyclic=False):
     queens_options = create_all_option(queens, n)
-    for queens in queens_options:
-        if check_not_cyclic(queens, n) == True:
-            print_borad(queens, n)
+    for i, queens in enumerate(queens_options):
+        print('--------- solution num. ', i + 1, ' ----------')
+        print_borad(queens, n)
+        if not_cyclic == True and check_not_cyclic(queens, n) == True:
+            print(colored('not cyclic!!', 'red'))
+        print('----------------------------------')
+        print()
 
 def order_queens(res, n):
     queens = [[] for i in range(n)]
@@ -235,18 +240,43 @@ def order_queens(res, n):
 
 # Driver Code
 
-command = sys.argv[1]
+def print_queens(queens, n):
+    for row in range(n):
+        str_row = ''
+        for col in range(n):
+            if col == (queens[row] - 1):
+                str_row += '  Q  '
+            else:
+                str_row += '  -  '
+        print(str_row)
+
+
+#command = sys.argv[1]
+command = 'print_queens'
 n = 11
 start = timeit.default_timer()
 res = solveNQ(n)
-if command == 'uncyclic':
-    if len(res) < n:
-        print('not enough queens placements!')
+
+if command == 'print_queens':
+    place = [0 for i in range(n)]
+    for i, r in enumerate(res):
+        if r[0] == 1:
+            print('************ solution num. ', i + 1, ' ************')
+            print_queens(r, n)
+            place[r[0] - 1] += 1
+    print('*****************************************************')
+    for i,p in enumerate(place):
+        print('number of ', i, 's: ', p)
+else:
+    if command == 'uncyclic':
+        if len(res) < n:
+            print('not enough queens placements!')
+        else:
+            res = order_queens(res, n)
+            merge_ordered_queens(res, n, not_cyclic = True)
     else:
         res = order_queens(res, n)
         merge_ordered_queens(res, n)
-else:
-    print_res(res, n)
 
 stop = timeit.default_timer()
 print('runtime - ', stop - start)

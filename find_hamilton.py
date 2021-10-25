@@ -62,7 +62,8 @@ def add_edge(N, colored_edges, new_edges, edge):
 
     return True
 
-def remove_illegel_edges(N, possible_edges, edge):
+def remove_illegel_edges(N, all_edges, edge):
+    possible_edges = all_edges.copy()
     v1, v2 = edge[0], edge[1]
     for i in range(N):
         if (v1, i) in possible_edges:
@@ -74,6 +75,8 @@ def remove_illegel_edges(N, possible_edges, edge):
             possible_edges.remove((i, v2))
         if (v2, i) in possible_edges:
             possible_edges.remove((v2, i))
+
+    return possible_edges
 
 def add_single_hamilton(N, colored_edges, new_edges):
     all_edges = list(itertools.combinations(range(N), 2))
