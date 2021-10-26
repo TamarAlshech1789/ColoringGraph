@@ -3,7 +3,7 @@ import copy
 # Python3 program to solve N Queen
 # Problem using backtracking
 global N
-N = 14
+N = 18
 
 global ilegal_conf
 ilegal_conf = []
@@ -134,8 +134,9 @@ def solveNQ():
     printSolution(board)
     return True
 
-
+for n in [12,14,15,16,18]:
 # Driver Code
-solveNQ()
+    N = n
+    solveNQ()
 
 # This code is contributed by Divyanshu Mehta
