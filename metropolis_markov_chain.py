@@ -103,7 +103,7 @@ def get_probability(symbols, symbol, board_cell):
     return curr_lambda / sum_lambda
 
 def metropolis_RLS():
-    while(params['num_no_options'] < 0.9 * params['N'] ** 2 ):
+    while(params['num_no_options'] < 0.85 * params['N'] ** 2 ):
         cell = random.choice(indices)
         possible_symbols = find_possible_symbols(cell)
         symbol = random.choice(possible_symbols)
@@ -129,10 +129,13 @@ for N in range(20, 100, 20):
         params['num_no_options'] = 0
         params['no_options_cells'] = []
         params['num_iteretions'] = 0
+
         board = np.zeros(params['N'] ** 2).reshape((params['N'], params['N']))
         for i in range(params['N']):
             board[i][i] = i + 1
             # board[i][params['N'] - i - 1] = (i + 2) % params['N'] + 1
+        indices = list(np.ndindex(board.shape))
+
 
         params['lambda'] = 10**e
         file_name = 'metropolis_borad_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '.txt'
@@ -141,6 +144,7 @@ for N in range(20, 100, 20):
         metropolis_RLS()
         print('*****************************************************')
         print('number of placements -', params['marked_cells'])
+        print('cover ', params['marked_cells'] / N**2, ' per. of the cells')
         print_solution()
         end = timeit.default_timer()
         print('running time- ', (end - start), ' sec.')
