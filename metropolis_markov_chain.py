@@ -80,12 +80,16 @@ def find_possible_symbols(cell):
     return symbols
 
 def get_probability(symbols, symbol, board_cell):
-    sum_lambda = 0.0
-    curr_lambda = 0.0
+    sum_lambda = 0
+    curr_lambda = 0
     exponent = params['marked_cells']
+    min_exponent = params['marked_cells']
+    if board_cell > 0:
+        min_exponent -= 1
+    exponent -= min_exponent
 
     for s in symbols:
-        add = 0.0
+        add = 0
         if s == 0:
             if board_cell == 0:
                 add = params['lambda'] ** (exponent)
@@ -141,7 +145,7 @@ for N in range(20, 100, 20):
 
         params['lambda'] = 10**e
         file_name = 'metropolis_borad_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '.txt'
-        #sys.stdout = open(file_name, "w")
+        sys.stdout = open(file_name, "w")
         start = timeit.default_timer()
         metropolis_RLS()
         print('*****************************************************')
@@ -153,4 +157,4 @@ for N in range(20, 100, 20):
         end = timeit.default_timer()
         print('running time- ', (end - start), ' sec.')
 
-        #sys.stdout.close()
+        sys.stdout.close()
