@@ -139,7 +139,7 @@ for N in range(20, 100, 20):
 
         params['lambda'] = 10**e
         file_name = 'metropolis_borad_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '.txt'
-        sys.stdout = open(file_name, "w")
+        #sys.stdout = open(file_name, "w")
         start = timeit.default_timer()
         metropolis_RLS()
         print('*****************************************************')
@@ -149,4 +149,4 @@ for N in range(20, 100, 20):
         end = timeit.default_timer()
         print('running time- ', (end - start), ' sec.')
 
-        sys.stdout.close()
+        #sys.stdout.close()
