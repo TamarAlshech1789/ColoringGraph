@@ -22,12 +22,14 @@ indices = list(np.ndindex(board.shape))
 
 def print_solution():
     for i in range(params['N']):
+        line = ""
         for j in range(params['N']):
             if board[i][j] == 0:
-                print('-- ')
+                line += '-- '
             else:
-                print("{:02d}".format(int(board[i][j])), " ")
-        print()
+                line += "{:02d}".format(int(board[i][j]))
+                line += " "
+        print(line)
 
 #find all possible symbol for a single cell
 def find_possible_symbols(cell):
@@ -119,37 +121,34 @@ def metropolis_RLS():
         params['max_marked_cells'] = max(params['max_marked_cells'], params['marked_cells'])
         params['num_iteretions'] += 1
 
-#for N in range(20, 100, 20):
-    #for e in range(2,10):
-#initial params
-N = 10
-e = 2
+for N in range(20, 100, 20):
+    for e in range(2,10):
+        #initial params
+        params['N'] = N
+        params['num_iteretions'] = 0
+        params['marked_cells'] = params['N']
+        params['max_marked_cells'] = 0
+        params['num_no_options'] = 0
+        params['no_options_cells'] = []
+        params['num_iteretions'] = 0
 
-params['N'] = N
-params['num_iteretions'] = 0
-params['marked_cells'] = params['N']
-params['max_marked_cells'] = 0
-params['num_no_options'] = 0
-params['no_options_cells'] = []
-params['num_iteretions'] = 0
-
-board = np.zeros(params['N'] ** 2).reshape((params['N'], params['N']))
-for i in range(params['N']):
-    board[i][i] = i + 1
-    # board[i][params['N'] - i - 1] = (i + 2) % params['N'] + 1
-indices = list(np.ndindex(board.shape))
+        board = np.zeros(params['N'] ** 2).reshape((params['N'], params['N']))
+        for i in range(params['N']):
+            board[i][i] = i + 1
+            # board[i][params['N'] - i - 1] = (i + 2) % params['N'] + 1
+        indices = list(np.ndindex(board.shape))
 
 
-params['lambda'] = 10**e
-file_name = 'metropolis_borad_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '.txt'
-#sys.stdout = open(file_name, "w")
-start = timeit.default_timer()
-metropolis_RLS()
-print('*****************************************************')
-print('number of placements -', params['marked_cells'])
-print('cover ', params['marked_cells'] / N**2, ' per. of the cells')
-print_solution()
-end = timeit.default_timer()
-print('running time- ', (end - start), ' sec.')
+        params['lambda'] = 10**e
+        file_name = 'metropolis_borad_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '.txt'
+        #sys.stdout = open(file_name, "w")
+        start = timeit.default_timer()
+        metropolis_RLS()
+        print('*****************************************************')
+        print('number of placements -', params['marked_cells'])
+        print('cover ', params['marked_cells'] / N**2, ' per. of the cells')
+        print_solution()
+        end = timeit.default_timer()
+        print('running time- ', (end - start), ' sec.')
 
-#sys.stdout.close()
+        #sys.stdout.close()
