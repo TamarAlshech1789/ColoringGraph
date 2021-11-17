@@ -24,9 +24,9 @@ def print_solution():
     for i in range(params['N']):
         for j in range(params['N']):
             if board[i][j] == 0:
-                print('--', end=" ")
+                print('-- ')
             else:
-                print("{:02d}".format(int(board[i][j])), end=" ")
+                print("{:02d}".format(int(board[i][j])), " ")
         print()
 
 #find all possible symbol for a single cell
