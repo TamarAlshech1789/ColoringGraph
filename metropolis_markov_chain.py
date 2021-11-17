@@ -80,12 +80,12 @@ def find_possible_symbols(cell):
     return symbols
 
 def get_probability(symbols, symbol, board_cell):
-    sum_lambda = 0
-    curr_lambda = 0
+    sum_lambda = 0.0
+    curr_lambda = 0.0
     exponent = params['marked_cells']
 
     for s in symbols:
-        add = 0
+        add = 0.0
         if s == 0:
             if board_cell == 0:
                 add = params['lambda'] ** (exponent)
@@ -144,6 +144,8 @@ for N in range(20, 100, 20):
         #sys.stdout = open(file_name, "w")
         start = timeit.default_timer()
         metropolis_RLS()
+        print('*****************************************************')
+        print(file_name)
         print('*****************************************************')
         print('number of placements -', params['marked_cells'])
         print('cover ', params['marked_cells'] / N**2, ' per. of the cells')
