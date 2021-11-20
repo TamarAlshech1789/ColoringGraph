@@ -3,4 +3,4 @@
 #SBATCH -c4
 #SBATCH --time=2-0
 
-python metropolis_markov_chain.py 50 3
+python metropolis_markov_chain.py 50 4
