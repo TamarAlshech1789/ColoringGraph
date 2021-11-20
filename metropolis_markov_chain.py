@@ -13,7 +13,6 @@ params = {
     'no_options_cells' : [],
     'num_iteretions' : 0,
     'num_changing_num_to_0' : 0,
-    'num_changing_0_to_0' : 0,
     'num_changing_0_to_num' : 0,
     'num_changing_num_to_num' : 0
 }
@@ -113,7 +112,7 @@ def get_probability(symbols, symbol, board_cell):
     return curr_lambda / sum_lambda
 
 def metropolis_RLS():
-    while(params['num_no_options'] < params['N'] ** 2 ):
+    while(params['num_no_options'] < 0.9 * params['N'] ** 2 and params['marked_cells'] < N ** 2 ):
         cell = random.choice(indices)
         possible_symbols = find_possible_symbols(cell)
         symbol = random.choice(possible_symbols)
@@ -125,13 +124,11 @@ def metropolis_RLS():
                 if symbol > 0:
                     params['marked_cells'] += 1
                     params['num_changing_0_to_num'] += 1
-                else:
-                    params['num_changing_0_to_0'] += 1
             else:
                 if symbol == 0:
                     params['marked_cells'] -= 1
                     params['num_changing_num_to_0'] += 1
-                else:
+                elif not symbol == board[cell[0]][cell[1]]:
                     params['num_changing_num_to_num'] += 1
 
             board[cell[0]][cell[1]] = symbol
@@ -166,6 +163,7 @@ file_name = 'metropolis_borad_N_' +  str(params['N']) + '_lambda_10e' + str(e) +
 #sys.stdout = open(file_name, "w")
 start = timeit.default_timer()
 metropolis_RLS()
+print('running until board is full!')
 print('*****************************************************')
 print(file_name)
 print('*****************************************************')
@@ -175,7 +173,6 @@ print_solution()
 end = timeit.default_timer()
 print('running time- ', (end - start), ' sec.')
 print('*****************************************************')
-print('number of changes 0 to 0-', params['num_changing_0_to_0'], ' times')
 print('number of changes 0 to num-', params['num_changing_0_to_num'], ' times')
 print('number of changes num to 0-', params['num_changing_num_to_0'], ' times')
 print('number of changes num to num-', params['num_changing_num_to_num'], ' times')
