@@ -4,9 +4,9 @@ import random
 import timeit
 
 params = {
-    'lambda' : 10**3,
-    'lambda_power' : 3,
-    'N': 50,
+    'lambda' : 10**int(sys.argv[2]),
+    'lambda_power' : int(sys.argv[2]),
+    'N': int(sys.argv[1]),
     'marked_cells' : 0,
     'max_marked_cells' : 0,
     'num_no_options' : 0,
@@ -22,6 +22,98 @@ board = np.zeros(params['N']**2).reshape((params['N'], params['N']))
 
 global indices
 indices = list(np.ndindex(board.shape))
+
+global used_indices
+used_indices = []
+
+global cant_place_indices
+cant_place_indices = []
+
+global occupied_cells_rows, occupied_cells_cols
+occupied_cells_rows = [[] for i in range(params['N'])]
+occupied_cells_cols = [[] for i in range(params['N'])]
+
+
+def choose_random_cell():
+    cell = random.choice(indices)
+    while(board[cell[0]][cell[1]] != 0):
+        cell = random.choice(indices)
+
+    return cell
+
+def choose_random_color(cell):
+    colors = list(range(1, N+1))
+    (row, col) = cell
+
+    for r in occupied_cells_cols[col]:
+        if board[r][col] in colors :
+            colors.remove(board[r][col])
+    for c in occupied_cells_rows[row]:
+        if board[row][c] in colors :
+            colors.remove(board[row][c])
+
+    # Check left diagonal on upeer side
+    for i, j in zip(range(row, -1, -1),
+                    range(col, -1, -1)):
+        if board[i][j] in colors:
+            colors.remove(board[i][j])
+
+    # Check left diagonal on lower side
+    for i, j in zip(range(row, N, 1),
+                    range(col, -1, -1)):
+        if board[i][j] in colors:
+            colors.remove(board[i][j])
+
+    # Check right diagonal on upper side
+    for i, j in zip(range(row, -1, -1),
+                    range(col, N, 1)):
+        if board[i][j] in colors:
+            colors.remove(board[i][j])
+
+    # Check right diagonal on upper side
+    for i, j in zip(range(row, N, 1),
+                    range(col, N, 1)):
+        if board[i][j] in colors:
+            colors.remove(board[i][j])
+
+    if len(colors) == 0:
+        return 0
+
+    return random.choice(colors)
+
+def find_set_of_absorbers(cell):
+    B = []
+    colors = []
+    (row, col) = cell
+    for c in occupied_cells_rows[row]:
+        if board[row][c] in colors :
+            colors.appennd(board[row][c])
+
+    return B
+
+def find_absorber(cell):
+    B = find_set_of_absorbers(cell)
+    return random.choice(B)
+
+def random_greedy():
+    # Get a list of indices for an array of this shape#Get a list of indices for an array of this shape
+    queen_count = 0
+
+    while queen_count < 0.75 * (N ** 2):
+        cell = choose_random_cell()
+        color = choose_random_color(cell)
+        if color == 0:
+            cant_place_indices.append(cell)
+            indices.remove(cell)
+        else:
+            board[cell[0]][cell[1]] = color
+            occupied_cells_cols[cell[1]].append(cell[0])
+            occupied_cells_rows[cell[0]].append(cell[1])
+            indices.remove(cell)
+            used_indices.append(cell)
+            queen_count += 1
+
+    return board, queen_count
 
 def print_solution():
     for i in range(params['N']):
@@ -135,28 +227,29 @@ def metropolis_RLS():
         params['max_marked_cells'] = max(params['max_marked_cells'], params['marked_cells'])
         params['num_iteretions'] += 1
 
+def init_all_params(N, e):
+    # initial params
+    params['N'] = N
+    params['lambda_power'] = e
+    params['num_iteretions'] = 0
+    params['max_marked_cells'] = 0
+    params['num_no_options'] = 0
+    params['no_options_cells'] = []
+    params['num_iteretions'] = 0
+    params['num_changing_0'] = 0
+
+    """for i in range(params['N']):
+        board[i][i] = i + 1
+        # board[i][params['N'] - i - 1] = (i + 2) % params['N'] + 1"""
+    board, params['marked_cells'] = random_greedy()
+
+
 N = int(sys.argv[1])
 e = int(sys.argv[2])
 
 #for N in range(20, 100, 20):
     #for e in range(2,10):
-#initial params
-params['N'] = N
-params['lambda_power'] = e
-params['num_iteretions'] = 0
-params['marked_cells'] = params['N']
-params['max_marked_cells'] = 0
-params['num_no_options'] = 0
-params['no_options_cells'] = []
-params['num_iteretions'] = 0
-params['num_changing_0'] = 0
-
-board = np.zeros(params['N'] ** 2).reshape((params['N'], params['N']))
-for i in range(params['N']):
-    board[i][i] = i + 1
-    # board[i][params['N'] - i - 1] = (i + 2) % params['N'] + 1
-indices = list(np.ndindex(board.shape))
-
+init_all_params(N, e)
 
 params['lambda'] = 10**e
 file_name = 'metropolis_borad_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '.txt'
