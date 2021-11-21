@@ -99,7 +99,7 @@ def random_greedy():
     # Get a list of indices for an array of this shape#Get a list of indices for an array of this shape
     queen_count = 0
 
-    while queen_count < 0.75 * (N ** 2):
+    while queen_count < 0.8 * (N ** 2):
         cell = choose_random_cell()
         color = choose_random_color(cell)
         if color == 0:
@@ -208,24 +208,25 @@ def metropolis_RLS():
         cell = random.choice(indices)
         possible_symbols = find_possible_symbols(cell)
         symbol = random.choice(possible_symbols)
-        p = get_probability(possible_symbols, symbol, board[cell[0]][cell[1]])
-        update = np.random.choice([0,1], 1, p=[1 - p, p])
+        if not symbol == board[cell[0]][cell[1]]:
+            p = get_probability(possible_symbols, symbol, board[cell[0]][cell[1]])
+            update = np.random.choice([0,1], 1, p=[1 - p, p])
 
-        if update == 1:
-            if board[cell[0]][cell[1]] == 0:
-                if symbol > 0:
-                    params['marked_cells'] += 1
-                    params['num_changing_0_to_num'] += 1
-            else:
-                if symbol == 0:
-                    params['marked_cells'] -= 1
-                    params['num_changing_num_to_0'] += 1
-                elif not symbol == board[cell[0]][cell[1]]:
-                    params['num_changing_num_to_num'] += 1
+            if update == 1:
+                if board[cell[0]][cell[1]] == 0:
+                    if symbol > 0:
+                        params['marked_cells'] += 1
+                        params['num_changing_0_to_num'] += 1
+                else:
+                    if symbol == 0:
+                        params['marked_cells'] -= 1
+                        params['num_changing_num_to_0'] += 1
+                    elif not symbol == board[cell[0]][cell[1]]:
+                        params['num_changing_num_to_num'] += 1
 
-            board[cell[0]][cell[1]] = symbol
-        params['max_marked_cells'] = max(params['max_marked_cells'], params['marked_cells'])
-        params['num_iteretions'] += 1
+                board[cell[0]][cell[1]] = symbol
+            params['max_marked_cells'] = max(params['max_marked_cells'], params['marked_cells'])
+            params['num_iteretions'] += 1
 
 def init_all_params(N, e):
     # initial params
