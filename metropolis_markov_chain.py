@@ -2,6 +2,12 @@ import sys
 import numpy as np
 import random
 import timeit
+from enum import Enum
+
+class SelectingSymbolMethod(Enum):
+    metropolis    = 1
+    random_symbol = 2
+    prob_symbol   = 3
 
 params = {
     'lambda' : 10**int(sys.argv[2]),
@@ -17,8 +23,8 @@ params = {
     'num_changing_num_to_num' : 0
 }
 
-global pick_with_prob
-pick_with_prob = False
+global select_symbol
+select_symbol = SelectingSymbolMethod.metropolis
 
 global board
 board = np.zeros(params['N']**2).reshape((params['N'], params['N']))
@@ -47,46 +53,6 @@ def choose_random_cell():
 
     return cell
 
-def choose_random_color(cell):
-    colors = list(range(1, N+1))
-    (row, col) = cell
-
-    for r in occupied_cells_cols[col]:
-        if board[r][col] in colors :
-            colors.remove(board[r][col])
-    for c in occupied_cells_rows[row]:
-        if board[row][c] in colors :
-            colors.remove(board[row][c])
-
-    # Check left diagonal on upeer side
-    for i, j in zip(range(row, -1, -1),
-                    range(col, -1, -1)):
-        if board[i][j] in colors:
-            colors.remove(board[i][j])
-
-    # Check left diagonal on lower side
-    for i, j in zip(range(row, N, 1),
-                    range(col, -1, -1)):
-        if board[i][j] in colors:
-            colors.remove(board[i][j])
-
-    # Check right diagonal on upper side
-    for i, j in zip(range(row, -1, -1),
-                    range(col, N, 1)):
-        if board[i][j] in colors:
-            colors.remove(board[i][j])
-
-    # Check right diagonal on upper side
-    for i, j in zip(range(row, N, 1),
-                    range(col, N, 1)):
-        if board[i][j] in colors:
-            colors.remove(board[i][j])
-
-    if len(colors) == 0:
-        return 0
-
-    return random.choice(colors)
-
 def find_set_of_absorbers(cell):
     B = []
     colors = []
@@ -107,7 +73,12 @@ def random_greedy():
 
     while queen_count < 0.7 * (N ** 2):
         cell = choose_random_cell()
-        color = choose_random_color(cell)
+        colors = find_possible_symbols(cell)
+        if len(colors) == 0:
+            color = 0
+        else:
+            color = random.choice(colors)
+
         if color == 0:
             cant_place_indices.append(cell)
             indices.remove(cell)
@@ -133,7 +104,7 @@ def print_solution():
         print(line)
 
 #find all possible symbol for a single cell
-def find_possible_symbols(cell):
+def find_possible_symbols(cell, update_params = False):
     symbols = list(range(1, params['N']+1))
     (row, col) = cell
 
@@ -167,18 +138,15 @@ def find_possible_symbols(cell):
                     range(col, params['N'], 1)):
         if board[i][j] in symbols:
             symbols.remove(board[i][j])
+    if update_params == True:
+        if len(symbols) == 0:
+            if not cell in params['no_options_cells']:
+                params['num_no_options'] += 1
+                params['no_options_cells'].append(cell)
+        else:
+            params['num_no_options'] = 0
+            params['no_options_cells'] = []
 
-    if len(symbols) == 0:
-        if not cell in params['no_options_cells']:
-            params['num_no_options'] += 1
-            params['no_options_cells'].append(cell)
-    else:
-        params['num_no_options'] = 0
-        params['no_options_cells'] = []
-
-    symbols.append(0)
-    if board[row][col] > 0:
-        symbols.append(board[row][col])
     return symbols
 
 def get_probability(symbols, symbol, board_cell):
@@ -226,23 +194,43 @@ def update_params(cell, symbol):
     params['num_iteretions'] += 1
 
 def metropolis_RLS():
-    while(params['num_no_options'] < 0.9 * params['N'] ** 2 and params['marked_cells'] < N ** 2 ):
+    while(params['num_no_options'] < 0.8 * params['N'] ** 2 and params['marked_cells'] < N ** 2 ):
         cell = random.choice(all_indices)
-        possible_symbols = find_possible_symbols(cell)
-        if(pick_with_prob == True):
-            p_vec = [get_probability(possible_symbols, s, board[cell[0]][cell[1]]) for s in possible_symbols]
-            symbol = np.random.choice(possible_symbols, 1, p=p_vec)
-            update_params(cell, symbol)
+        row,col = cell
+        cell_symbol = board[row][col]
+
+        if select_symbol == SelectingSymbolMethod.metropolis:
+            possible_symbols = find_possible_symbols(cell, True)
+            if len(possible_symbols) > 0:
+                symbol = random.choice(possible_symbols)
+                update_params(cell, symbol)
+            else:
+                if cell_symbol > 0:
+                    p = 1 / params['lambda']
+                    update = np.random.choice([0, 1], 1, p=[1 - p, p])
+                    if update == 1:
+                        update_params(cell, 0)
 
         else:
-            symbol = random.choice(possible_symbols)
-            if not symbol == board[cell[0]][cell[1]]:
-                p = get_probability(possible_symbols, symbol, board[cell[0]][cell[1]])
-                update = np.random.choice([0,1], 1, p=[1 - p, p])
+            # get possible values
+            possible_symbols = find_possible_symbols(cell, True, True)
+            possible_symbols.append(0)
+            if cell_symbol > 0:
+                possible_symbols.append(cell_symbol)
 
-                if update == 1:
-                    update_params(cell, symbol)
+            if select_symbol == SelectingSymbolMethod.prob_symbol:
+                p_vec = [get_probability(possible_symbols, s, cell_symbol) for s in possible_symbols]
+                symbol = np.random.choice(possible_symbols, 1, p=p_vec)
+                update_params(cell, symbol)
+            #picking symbol randomally
+            else:
+                symbol = random.choice(possible_symbols)
+                if not symbol == cell_symbol:
+                    p = get_probability(possible_symbols, symbol, cell_symbol)
+                    update = np.random.choice([0,1], 1, p=[1 - p, p])
 
+                    if update == 1:
+                        update_params(cell, symbol)
 
 def init_all_params(N, e):
     # initial params
