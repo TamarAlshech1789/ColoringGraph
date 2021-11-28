@@ -71,7 +71,7 @@ def random_greedy():
     # Get a list of indices for an array of this shape#Get a list of indices for an array of this shape
     queen_count = 0
 
-    while queen_count < 0.7 * (N ** 2):
+    while queen_count < random_greedy_fill * (N ** 2) and len(indices) > 0:
         cell = choose_random_cell()
         colors = find_possible_symbols(cell)
         if len(colors) == 0:
@@ -207,7 +207,7 @@ def metropolis_RLS():
             else:
                 if cell_symbol > 0:
                     p = 1 / params['lambda']
-                    update = np.random.choice([0, 1], 1, p=[1 - p, p])
+                    [update] = np.random.choice([0, 1], 1, p=[1 - p, p])
                     if update == 1:
                         update_params(cell, 0)
 
@@ -251,8 +251,12 @@ def init_all_params(N, e):
 
 N = int(sys.argv[1])
 e = int(sys.argv[2])
+
 global stop_condition
 stop_condition = float(sys.argv[3]) / 100
+
+global random_greedy_fill
+random_greedy_fill = int(sys.argv[4]) / 100
 
 #for N in range(20, 100, 20):
     #for e in range(2,10):
@@ -268,7 +272,7 @@ print('*****************************************************')
 print(file_name)
 print('*****************************************************')
 print('number of placements -', params['marked_cells'])
-print('cover ', params['marked_cells'] / N**2, ' per. of the cells')
+print('cover ', float(params['marked_cells']) / N**2, ' per. of the cells')
 print_solution()
 end = timeit.default_timer()
 print('running time- ', (end - start), ' sec.')
