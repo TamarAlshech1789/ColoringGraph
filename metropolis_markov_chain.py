@@ -194,7 +194,7 @@ def update_params(cell, symbol):
     params['num_iteretions'] += 1
 
 def metropolis_RLS():
-    while(params['num_no_options'] < 0.8 * params['N'] ** 2 and params['marked_cells'] < N ** 2 ):
+    while(params['num_no_options'] < stop_condition * params['N'] ** 2 and params['marked_cells'] < N ** 2 ):
         cell = random.choice(all_indices)
         row,col = cell
         cell_symbol = board[row][col]
@@ -251,6 +251,8 @@ def init_all_params(N, e):
 
 N = int(sys.argv[1])
 e = int(sys.argv[2])
+global stop_condition
+stop_condition = float(sys.argv[3]) / 100
 
 #for N in range(20, 100, 20):
     #for e in range(2,10):
