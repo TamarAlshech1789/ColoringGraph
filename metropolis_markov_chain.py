@@ -203,13 +203,15 @@ def update_params(cell, symbol):
 
     board[cell[0]][cell[1]] = symbol
     if params['max_marked_cells'] < params['marked_cells']:
-        cover_per = float(100 * params['max_marked_cells']) / N**2
-        if float(100 * params['max_marked_cells']) / N**2 > 95 and (cover_per - params['max_cover_per']) >= 0.2 :
-            params['max_cover_per'] = cover_per
+        cover_per = float(100 * params['marked_cells']) / N**2
+        if float(100 * params['marked_cells']) / N**2 > 95 and (cover_per - params['max_cover_per']) >= 0.2 :
             file = open(file_name, 'a')
-            file.write(str(float(100 * params['max_marked_cells']) / N**2) + ' per.         at time ' + str(timeit.default_timer() - start) +'\n')
-            if cover_per.is_integer() == True:
+
+            file.write(str(cover_per) + ' per.         at time ' + str(timeit.default_timer() - start) +'\n')
+            if int(cover_per * 100)%10 - int(params['max_cover_per'] * 100)%10 >= 1:
                 print_solution()
+            params['max_cover_per'] = cover_per
+
             file.close()
         params['max_marked_cells'] = params['marked_cells']
     params['num_iteretions'] += 1
@@ -286,7 +288,7 @@ random_greedy_fill = int(sys.argv[3]) / 100
     #for e in range(2,10):
 init_all_params(N, e)
 params['lambda'] = 10**e
-file_name = 'metropolis_borad_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '_randomGreed_' + str(sys.argv[3]) + '.txt'
+file_name = 'metropolis_board_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '_randomGreed_' + str(sys.argv[3]) + '.txt'
 
 print('running until board is full!')
 print('*****************************************************')
