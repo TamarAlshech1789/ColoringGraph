@@ -3,6 +3,7 @@ import numpy as np
 import random
 import timeit
 from enum import Enum
+import os, os.path
 
 class SelectingSymbolMethod(Enum):
     metropolis    = 1
@@ -15,13 +16,23 @@ params = {
     'N': int(sys.argv[1]),
     'marked_cells' : 0,
     'max_marked_cells' : 0,
+    'max_cover_per' : 0,
+    """
     'num_no_options' : 0,
     'no_options_cells' : [],
+    """
     'num_iteretions' : 0,
     'num_changing_num_to_0' : 0,
     'num_changing_0_to_num' : 0,
     'num_changing_num_to_num' : 0
 }
+global start
+start = timeit.default_timer()
+
+global file_name
+file_name = ''
+
+global file
 
 global select_symbol
 select_symbol = SelectingSymbolMethod.metropolis
@@ -138,6 +149,7 @@ def find_possible_symbols(cell, update_params = False):
                     range(col, params['N'], 1)):
         if board[i][j] in symbols:
             symbols.remove(board[i][j])
+    """
     if update_params == True:
         if len(symbols) == 0:
             if not cell in params['no_options_cells']:
@@ -146,7 +158,7 @@ def find_possible_symbols(cell, update_params = False):
         else:
             params['num_no_options'] = 0
             params['no_options_cells'] = []
-
+    """
     return symbols
 
 def get_probability(symbols, symbol, board_cell):
@@ -190,11 +202,21 @@ def update_params(cell, symbol):
             params['num_changing_num_to_num'] += 1
 
     board[cell[0]][cell[1]] = symbol
-    params['max_marked_cells'] = max(params['max_marked_cells'], params['marked_cells'])
+    if params['max_marked_cells'] < params['marked_cells']:
+        cover_per = float(100 * params['max_marked_cells']) / N**2
+        if float(100 * params['max_marked_cells']) / N**2 > 95 and (cover_per - params['max_cover_per']) >= 0.2 :
+            params['max_cover_per'] = cover_per
+            file = open(file_name, 'a')
+            file.write(str(float(100 * params['max_marked_cells']) / N**2) + ' per.         at time ' + str(timeit.default_timer() - start) +'\n')
+            if cover_per.is_integer() == True:
+                print_solution()
+            file.close()
+        params['max_marked_cells'] = params['marked_cells']
     params['num_iteretions'] += 1
 
 def metropolis_RLS():
-    while(params['num_no_options'] < stop_condition * params['N'] ** 2 and params['marked_cells'] < N ** 2 ):
+    #params['num_no_options'] < stop_condition * params['N'] ** 2 and
+    while(params['marked_cells'] < N ** 2 ):
         cell = random.choice(all_indices)
         row,col = cell
         cell_symbol = board[row][col]
@@ -207,7 +229,7 @@ def metropolis_RLS():
             else:
                 if cell_symbol > 0:
                     p = 1 / params['lambda']
-                    [update] = np.random.choice([0, 1], 1, p=[1 - p, p])
+                    update = np.random.choice([0, 1], 1, p=[1 - p, p])
                     if update == 1:
                         update_params(cell, 0)
 
@@ -238,8 +260,10 @@ def init_all_params(N, e):
     params['lambda_power'] = e
     params['num_iteretions'] = 0
     params['max_marked_cells'] = 0
+    """
     params['num_no_options'] = 0
     params['no_options_cells'] = []
+    """
     params['num_iteretions'] = 0
     params['num_changing_0'] = 0
 
@@ -251,26 +275,33 @@ def init_all_params(N, e):
 
 N = int(sys.argv[1])
 e = int(sys.argv[2])
-
-global stop_condition
+"""global stop_condition
 stop_condition = float(sys.argv[3]) / 100
+"""
 
 global random_greedy_fill
-random_greedy_fill = int(sys.argv[4]) / 100
+random_greedy_fill = int(sys.argv[3]) / 100
 
 #for N in range(20, 100, 20):
     #for e in range(2,10):
 init_all_params(N, e)
-
 params['lambda'] = 10**e
-file_name = 'metropolis_borad_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '.txt'
-#sys.stdout = open(file_name, "w")
-start = timeit.default_timer()
-metropolis_RLS()
+file_name = 'metropolis_borad_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '_randomGreed_' + str(sys.argv[3]) + '.txt'
+
 print('running until board is full!')
 print('*****************************************************')
 print(file_name)
 print('*****************************************************')
+
+file_name= '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/' + file_name
+if os.path.isfile(file_name):
+    os.remove(file_name)
+file = open(file_name, 'a')
+file.write('fill precentages of the board\n')
+file.close()
+#sys.stdout = open(file_name, "w")
+
+metropolis_RLS()
 print('number of placements -', params['marked_cells'])
 print('cover ', float(params['marked_cells']) / N**2, ' per. of the cells')
 print_solution()
