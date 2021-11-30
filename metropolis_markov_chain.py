@@ -103,7 +103,7 @@ def random_greedy():
 
     return board, queen_count
 
-def print_solution():
+def print_solution(file = None):
     for i in range(params['N']):
         line = ""
         for j in range(params['N']):
@@ -112,7 +112,11 @@ def print_solution():
             else:
                 line += "{:02d}".format(int(board[i][j]))
                 line += " "
-        print(line)
+        if file == None:
+            print(line)
+        else:
+            file.write(line)
+            file.write('\n')
 
 #find all possible symbol for a single cell
 def find_possible_symbols(cell, update_params = False):
@@ -209,7 +213,10 @@ def update_params(cell, symbol):
 
             file.write(str(cover_per) + ' per.         at time ' + str(timeit.default_timer() - start) +'\n')
             if int(cover_per * 100)%10 - int(params['max_cover_per'] * 100)%10 >= 1:
-                print_solution()
+                file.write('*****************************************************\n')
+                file.write('board with ' + str(int(cover_per)) + ' per cover:\n')
+                print_solution(file)
+                file.write('*****************************************************\n')
             params['max_cover_per'] = cover_per
 
             file.close()
