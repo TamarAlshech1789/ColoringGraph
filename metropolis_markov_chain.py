@@ -3,7 +3,8 @@ import numpy as np
 import random
 import timeit
 from enum import Enum
-import os, os.path
+import os.path
+import csv
 
 class SelectingSymbolMethod(Enum):
     metropolis    = 1
@@ -17,10 +18,6 @@ params = {
     'marked_cells' : 0,
     'max_marked_cells' : 0,
     'max_cover_per' : 0,
-    """
-    'num_no_options' : 0,
-    'no_options_cells' : [],
-    """
     'num_iteretions' : 0,
     'num_changing_num_to_0' : 0,
     'num_changing_0_to_num' : 0,
@@ -208,18 +205,24 @@ def update_params(cell, symbol):
     board[cell[0]][cell[1]] = symbol
     if params['max_marked_cells'] < params['marked_cells']:
         cover_per = float(100 * params['marked_cells']) / N**2
-        if float(100 * params['marked_cells']) / N**2 > 95 and (cover_per - params['max_cover_per']) >= 0.2 :
-            file = open(file_name, 'a')
+        if (cover_per - params['max_cover_per']) >= 0.2:
+            with open(csv_file_name, 'a', newline='') as csv_file:
+                csv_writer = csv.writer(csv_file)
+                csv_writer.writerow([timeit.default_timer() - start, cover_per])
 
-            file.write(str(cover_per) + ' per.         at time ' + str(timeit.default_timer() - start) +'\n')
-            if int(cover_per * 100)%10 - int(params['max_cover_per'] * 100)%10 >= 1:
-                file.write('*****************************************************\n')
-                file.write('board with ' + str(int(cover_per)) + ' per cover:\n')
-                print_solution(file)
-                file.write('*****************************************************\n')
-            params['max_cover_per'] = cover_per
+            if float(100 * params['marked_cells']) / N**2 > 95:
+                file = open(file_name, 'a')
 
-            file.close()
+                file.write(str(cover_per) + ' per.         at time ' + str(timeit.default_timer() - start) +'\n')
+                if int(cover_per * 100)%10 - int(params['max_cover_per'] * 100)%10 >= 1:
+                    file.write('*****************************************************\n')
+                    file.write('board with ' + str(int(cover_per)) + ' per cover:\n')
+                    print_solution(file)
+                    file.write('*****************************************************\n')
+                params['max_cover_per'] = cover_per
+
+                file.close()
+
         params['max_marked_cells'] = params['marked_cells']
     params['num_iteretions'] += 1
 
@@ -284,15 +287,10 @@ def init_all_params(N, e):
 
 N = int(sys.argv[1])
 e = int(sys.argv[2])
-"""global stop_condition
-stop_condition = float(sys.argv[3]) / 100
-"""
 
 global random_greedy_fill
 random_greedy_fill = int(sys.argv[3]) / 100
 
-#for N in range(20, 100, 20):
-    #for e in range(2,10):
 init_all_params(N, e)
 params['lambda'] = 10**e
 file_name = 'metropolis_board_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '_randomGreed_' + str(sys.argv[3]) + '.txt'
@@ -306,6 +304,15 @@ file_name= '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/' + file_n
 if os.path.isfile(file_name):
     os.remove(file_name)
 file = open(file_name, 'a')
+
+csv_file_name = '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/' + 'N_' + str(params['N']) + '_10e' + str(e) + '.csv'
+if os.path.isfile(csv_file_name):
+    os.remove(csv_file_name)
+
+with open(csv_file_name, 'a', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow(['Time (sec)', 'Per. cover'])
+
 file.write('fill precentages of the board\n')
 file.close()
 #sys.stdout = open(file_name, "w")
