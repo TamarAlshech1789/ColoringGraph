@@ -206,7 +206,7 @@ def update_params(cell, symbol):
     if params['max_marked_cells'] < params['marked_cells']:
         cover_per = float(100 * params['marked_cells']) / N**2
         if (cover_per - params['max_cover_per']) >= 0.2:
-            with open(csv_file_name, 'a', newline='') as csv_file:
+            with open(csv_file_name, 'a') as csv_file:
                 csv_writer = csv.writer(csv_file)
                 csv_writer.writerow([timeit.default_timer() - start, cover_per])
 
@@ -300,16 +300,19 @@ print('*****************************************************')
 print(file_name)
 print('*****************************************************')
 
-file_name= '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/' + file_name
+if len(sys.argv) > 4:
+    csv_file_name = 'N_' + str(params['N']) + '_10e' + str(e) + '.csv'
+else:
+    file_name= '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/' + file_name
+    csv_file_name = '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/' + 'N_' + str(params['N']) + '_10e' + str(e) + '.csv'
 if os.path.isfile(file_name):
     os.remove(file_name)
 file = open(file_name, 'a')
 
-csv_file_name = '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/' + 'N_' + str(params['N']) + '_10e' + str(e) + '.csv'
 if os.path.isfile(csv_file_name):
     os.remove(csv_file_name)
 
-with open(csv_file_name, 'a', newline='') as csv_file:
+with open(csv_file_name, 'a',) as csv_file:
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow(['Time (sec)', 'Per. cover'])
 
