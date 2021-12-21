@@ -219,9 +219,9 @@ def update_params(cell, symbol):
                     file.write('board with ' + str(int(cover_per)) + ' per cover:\n')
                     print_solution(file)
                     file.write('*****************************************************\n')
-                params['max_cover_per'] = cover_per
-
                 file.close()
+
+            params['max_cover_per'] = cover_per
 
         params['max_marked_cells'] = params['marked_cells']
     params['num_iteretions'] += 1
