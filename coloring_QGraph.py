@@ -3,12 +3,14 @@ import random
 import copy
 from colorama import Fore
 import timeit
+import os
+import sys
 
 global N
-N = 1000
+N = int(sys.argv[1])
 
 global print_board
-print_board = False
+print_board = True
 
 global queen_borad
 queen_borad = np.zeros(N**2).reshape((N, N))
@@ -26,6 +28,8 @@ global occupied_cells_rows, occupied_cells_cols
 occupied_cells_rows = [[] for i in range(N)]
 occupied_cells_cols = [[] for i in range(N)]
 
+global output_dir
+output_dir = 'N_' + str(N) +'/'
 
 def choose_random_cell():
     cell = random.choice(indices)
@@ -84,15 +88,6 @@ def choose_random_color(cell):
 
     return random.choice(colors)
 
-def fix_board(cell):
-    new_cell = random.choice(used_indices)
-
-
-
-    used_indices.remove(new_cell)
-    indices.append(new_cell)
-
-
 def random_greedy():
     # Get a list of indices for an array of this shape#Get a list of indices for an array of this shape
     queen_count = 0
@@ -121,14 +116,25 @@ def random_greedy():
     if(print_board):
         print('queens board - ')
         print_solution()
+
+        csv_file_name = output_dir + 'board_' + str(N) + '.csv'
+        np.savetxt(csv_file_name, queen_borad, delimiter = ',')
+
+        txt_file_name = output_dir + 'board_' + str(N) + '_num_of_queens.txt'
+        with open(txt_file_name, 'w') as txt_file:
+            txt_file.write('%d' % queen_count)
+
     return queen_count / N**2
 
 start = timeit.default_timer()
 num_of_repeat = 1
 prob = []
 
-print('*****************************************************')
-print('for N =', N, ', and', num_of_repeat, ' repeats:')
+if not os.path.isdir(output_dir):
+    os.mkdir(output_dir)
+
+print(Fore.WHITE, '*****************************************************')
+print(Fore.WHITE, 'for N =', N, ', and', num_of_repeat, ' repeats:')
 
 for i in range(num_of_repeat):
     queen_borad = np.zeros(N ** 2).reshape((N, N))
@@ -139,12 +145,12 @@ for i in range(num_of_repeat):
     occupied_cells_cols = [[] for i in range(N)]
 
     prob.append(random_greedy())
-    print('num of queens not replaced -', len(cant_place_indices), 'out of ', N**2)
+    print(Fore.WHITE, 'num of queens not replaced -', len(cant_place_indices), 'out of ', N**2)
 
-print('*****************************************************')
-print('average success- ', sum(prob) / len(prob))
-print('min success- ', min(prob))
-print('max success- ', max(prob))
+print(Fore.WHITE, '*****************************************************')
+print(Fore.WHITE, 'average success- ', sum(prob) / len(prob))
+print(Fore.WHITE, 'min success- ', min(prob))
+print(Fore.WHITE, 'max success- ', max(prob))
 end = timeit.default_timer()
-print('*****************************************************')
-print('running time- ', (end - start))
+print(Fore.WHITE, '*****************************************************')
+print(Fore.WHITE, 'running time- ', (end - start))

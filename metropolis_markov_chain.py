@@ -12,8 +12,7 @@ class SelectingSymbolMethod(Enum):
     prob_symbol   = 3
 
 params = {
-    'lambda' : 10**int(sys.argv[2]),
-    'lambda_power' : int(sys.argv[2]),
+    'lambda' : int(sys.argv[2]),
     'N': int(sys.argv[1]),
     'marked_cells' : 0,
     'max_marked_cells' : 0,
@@ -37,83 +36,30 @@ select_symbol = SelectingSymbolMethod.metropolis
 global board
 board = np.zeros(params['N']**2).reshape((params['N'], params['N']))
 
-global indices
-indices = list(np.ndindex(board.shape))
-
 global all_indices
 all_indices = list(np.ndindex(board.shape))
 
-global used_indices
-used_indices = []
+global cluster_path
+cluster_path = '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/'
 
-global cant_place_indices
-cant_place_indices = []
+global output_dir
+output_dir = 'N_' + sys.argv[1] +'/'
 
-global occupied_cells_rows, occupied_cells_cols
-occupied_cells_rows = [[] for i in range(params['N'])]
-occupied_cells_cols = [[] for i in range(params['N'])]
-
-
-def choose_random_cell():
-    cell = random.choice(indices)
-    while(board[cell[0]][cell[1]] != 0):
-        cell = random.choice(indices)
-
-    return cell
-
-def find_set_of_absorbers(cell):
-    B = []
-    colors = []
-    (row, col) = cell
-    for c in occupied_cells_rows[row]:
-        if board[row][c] in colors :
-            colors.appennd(board[row][c])
-
-    return B
-
-def find_absorber(cell):
-    B = find_set_of_absorbers(cell)
-    return random.choice(B)
-
-def random_greedy():
-    # Get a list of indices for an array of this shape#Get a list of indices for an array of this shape
-    queen_count = 0
-
-    while queen_count < random_greedy_fill * (N ** 2) and len(indices) > 0:
-        cell = choose_random_cell()
-        colors = find_possible_symbols(cell)
-        if len(colors) == 0:
-            color = 0
-        else:
-            color = random.choice(colors)
-
-        if color == 0:
-            cant_place_indices.append(cell)
-            indices.remove(cell)
-        else:
-            board[cell[0]][cell[1]] = color
-            occupied_cells_cols[cell[1]].append(cell[0])
-            occupied_cells_rows[cell[0]].append(cell[1])
-            indices.remove(cell)
-            used_indices.append(cell)
-            queen_count += 1
-
-    return board, queen_count
 
 def print_solution(file = None):
     for i in range(params['N']):
-        line = ""
-        for j in range(params['N']):
-            if board[i][j] == 0:
-                line += '-- '
+        line = ''
+        for s in board[i]:
+            if s == 0:
+                line == '-- '
             else:
-                line += "{:02d}".format(int(board[i][j]))
+                line += "{:02d}".format(int(s))
                 line += " "
         if file == None:
             print(line)
         else:
+            line += '\n'
             file.write(line)
-            file.write('\n')
 
 #find all possible symbol for a single cell
 def find_possible_symbols(cell, update_params = False):
@@ -166,8 +112,10 @@ def get_probability(symbols, symbol, board_cell):
     sum_lambda = 0.0
     curr_lambda = 0.0
     exponent = params['marked_cells']
+    min_exponent = exponent
     min_exponent = params['lambda_power'] * (exponent)
     if board_cell > 0:
+        min_exponent -= 1
         min_exponent = params['lambda_power'] * (exponent - 1)
 
     for s in symbols:
@@ -245,7 +193,7 @@ def metropolis_RLS():
                     if update == 1:
                         update_params(cell, 0)
 
-        else:
+        """else:
             # get possible values
             possible_symbols = find_possible_symbols(cell, True, True)
             possible_symbols.append(0)
@@ -264,12 +212,24 @@ def metropolis_RLS():
                     update = np.random.choice([0,1], 1, p=[1 - p, p])
 
                     if update == 1:
-                        update_params(cell, symbol)
+                        update_params(cell, symbol)"""
 
-def init_all_params(N, e):
-    # initial params
+def read_board():
+    csv_file_name = output_dir + 'board_' + str(N) + '.csv'
+    txt_file_name = output_dir + 'board_' + str(N) + '_num_of_queens.txt'
+
+    with open(csv_file_name) as file:
+        reader = csv.reader(file, quoting = csv.QUOTE_NONNUMERIC)
+        count = 0
+        for row in reader:
+            board[count] = row
+            count += 1
+
+    with open(txt_file_name) as txt_file:
+        params['marked_cells'] = int(txt_file.readline().rstrip('\n'))
+
+def init_all_params(N):
     params['N'] = N
-    params['lambda_power'] = e
     params['num_iteretions'] = 0
     params['max_marked_cells'] = 0
     """
@@ -282,33 +242,34 @@ def init_all_params(N, e):
     """for i in range(params['N']):
         board[i][i] = i + 1
         # board[i][params['N'] - i - 1] = (i + 2) % params['N'] + 1"""
-    board, params['marked_cells'] = random_greedy()
-
+    read_board()
 
 N = int(sys.argv[1])
-e = int(sys.argv[2])
+#e = int(sys.argv[2])
+params['lambda'] = int(sys.argv[2])
 
-global random_greedy_fill
-random_greedy_fill = int(sys.argv[3]) / 100
-
-init_all_params(N, e)
-params['lambda'] = 10**e
-file_name = 'metropolis_board_N_' +  str(params['N']) + '_lambda_10e' + str(e) + '_randomGreed_' + str(sys.argv[3]) + '.txt'
+#params['lambda'] = 10**e
+file_name = output_dir + 'metropolis_board_N_' +  str(params['N']) + '_lambda_' + str(params['lambda']) + '.txt'
 
 print('running until board is full!')
 print('*****************************************************')
 print(file_name)
 print('*****************************************************')
 
-if len(sys.argv) > 4:
-    csv_file_name = 'N_' + str(params['N']) + '_10e' + str(e) + '.csv'
-else:
-    file_name= '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/' + file_name
-    csv_file_name = '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/' + 'N_' + str(params['N']) + '_10e' + str(e) + '.csv'
+if len(sys.argv) < 4:
+    output_dir = cluster_path + output_dir
+
+init_all_params(N)
+
+if not os.path.isdir(output_dir):
+    os.mkdir(output_dir)
+
+
 if os.path.isfile(file_name):
     os.remove(file_name)
 file = open(file_name, 'a')
 
+csv_file_name = output_dir + 'N_' + str(params['N']) + '_lambda_' +str(params['lambda']) + '.csv'
 if os.path.isfile(csv_file_name):
     os.remove(csv_file_name)
 
