@@ -6,13 +6,8 @@ from enum import Enum
 import os.path
 import csv
 
-class SelectingSymbolMethod(Enum):
-    metropolis    = 1
-    random_symbol = 2
-    prob_symbol   = 3
-
 params = {
-    'lambda' : int(sys.argv[2]),
+    'lambda' : float(sys.argv[2]),
     'N': int(sys.argv[1]),
     'marked_cells' : 0,
     'max_marked_cells' : 0,
@@ -29,9 +24,6 @@ global file_name
 file_name = ''
 
 global file
-
-global select_symbol
-select_symbol = SelectingSymbolMethod.metropolis
 
 global board
 board = np.zeros(params['N']**2).reshape((params['N'], params['N']))
@@ -51,7 +43,7 @@ def print_solution(file = None):
         line = ''
         for s in board[i]:
             if s == 0:
-                line == '-- '
+                line += '-- '
             else:
                 line += "{:02d}".format(int(s))
                 line += " "
@@ -62,7 +54,7 @@ def print_solution(file = None):
             file.write(line)
 
 #find all possible symbol for a single cell
-def find_possible_symbols(cell, update_params = False):
+def find_possible_symbols(cell):
     symbols = list(range(1, params['N']+1))
     (row, col) = cell
 
@@ -96,47 +88,8 @@ def find_possible_symbols(cell, update_params = False):
                     range(col, params['N'], 1)):
         if board[i][j] in symbols:
             symbols.remove(board[i][j])
-    """
-    if update_params == True:
-        if len(symbols) == 0:
-            if not cell in params['no_options_cells']:
-                params['num_no_options'] += 1
-                params['no_options_cells'].append(cell)
-        else:
-            params['num_no_options'] = 0
-            params['no_options_cells'] = []
-    """
+
     return symbols
-
-def get_probability(symbols, symbol, board_cell):
-    sum_lambda = 0.0
-    curr_lambda = 0.0
-    exponent = params['marked_cells']
-    min_exponent = exponent
-    min_exponent = params['lambda_power'] * (exponent)
-    if board_cell > 0:
-        min_exponent -= 1
-        min_exponent = params['lambda_power'] * (exponent - 1)
-
-    for s in symbols:
-        add = 0.0
-        if s == 0:
-            if board_cell == 0:
-                add = 10 ** (params['lambda_power'] * (exponent) - min_exponent)
-            else:
-                add = 10 ** (params['lambda_power'] * (exponent - 1) - min_exponent)
-            if s == symbol:
-                curr_lambda = add
-        else:
-            if board_cell == 0:
-                add = 10 ** (params['lambda_power'] * (exponent + 1) - min_exponent)
-            else:
-                add = 10 ** (params['lambda_power'] * (exponent) - min_exponent)
-            if s == symbol:
-                curr_lambda = add
-        sum_lambda += add
-
-    return curr_lambda / sum_lambda
 
 def update_params(cell, symbol):
     if board[cell[0]][cell[1]] == 0:
@@ -175,44 +128,26 @@ def update_params(cell, symbol):
     params['num_iteretions'] += 1
 
 def metropolis_RLS():
-    #params['num_no_options'] < stop_condition * params['N'] ** 2 and
     while(params['marked_cells'] < N ** 2 ):
         cell = random.choice(all_indices)
         row,col = cell
         cell_symbol = board[row][col]
 
-        if select_symbol == SelectingSymbolMethod.metropolis:
-            possible_symbols = find_possible_symbols(cell, True)
-            if len(possible_symbols) > 0:
-                symbol = random.choice(possible_symbols)
-                update_params(cell, symbol)
-            else:
-                if cell_symbol > 0:
-                    p = 1 / params['lambda']
-                    update = np.random.choice([0, 1], 1, p=[1 - p, p])
-                    if update == 1:
-                        update_params(cell, 0)
+        possible_symbols = find_possible_symbols(cell)
+        if len(possible_symbols) > 0:
 
-        """else:
-            # get possible values
-            possible_symbols = find_possible_symbols(cell, True, True)
-            possible_symbols.append(0)
-            if cell_symbol > 0:
+            #do we need to do this?
+            if not cell_symbol in possible_symbols:
                 possible_symbols.append(cell_symbol)
 
-            if select_symbol == SelectingSymbolMethod.prob_symbol:
-                p_vec = [get_probability(possible_symbols, s, cell_symbol) for s in possible_symbols]
-                symbol = np.random.choice(possible_symbols, 1, p=p_vec)
-                update_params(cell, symbol)
-            #picking symbol randomally
-            else:
-                symbol = random.choice(possible_symbols)
-                if not symbol == cell_symbol:
-                    p = get_probability(possible_symbols, symbol, cell_symbol)
-                    update = np.random.choice([0,1], 1, p=[1 - p, p])
-
-                    if update == 1:
-                        update_params(cell, symbol)"""
+            symbol = random.choice(possible_symbols)
+            update_params(cell, symbol)
+        else:
+            if cell_symbol > 0:
+                p = 1 / params['lambda']
+                update = np.random.choice([0, 1], 1, p=[1 - p, p])
+                if update == 1:
+                    update_params(cell, 0)
 
 def read_board():
     csv_file_name = output_dir + 'board_' + str(N) + '.csv'
@@ -246,10 +181,10 @@ def init_all_params(N):
 
 N = int(sys.argv[1])
 #e = int(sys.argv[2])
-params['lambda'] = int(sys.argv[2])
+params['lambda'] = float(sys.argv[2])
 
 #params['lambda'] = 10**e
-file_name = output_dir + 'metropolis_board_N_' +  str(params['N']) + '_lambda_' + str(params['lambda']) + '.txt'
+file_name = 'metropolis_board_N_' +  str(params['N']) + '_lambda_' + str(params['lambda']) + '.txt'
 
 print('running until board is full!')
 print('*****************************************************')
@@ -264,7 +199,7 @@ init_all_params(N)
 if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 
-
+file_name = output_dir + file_name
 if os.path.isfile(file_name):
     os.remove(file_name)
 file = open(file_name, 'a')

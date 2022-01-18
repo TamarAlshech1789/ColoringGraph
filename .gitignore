@@ -1,3 +1,5 @@
 *.txt
 *.csv
 *.png
+random_greedy/__pycache__/
+*.out
