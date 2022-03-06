@@ -1,25 +1,18 @@
 import numpy as np
 import sys
+import copy
 from board import Board
 from read_board import read_board
 from random_greedy import random_greedy
 
 
-def couples_metropolis_RLS(board):
+def metropolis_RLS(board, _lambda):
     N = board.N
+    board.MMC_empty_cells = copy.deepcopy(board.empty_cells)
     while board.marked_cells < N **2:
-        (cell, symbol) = board.choose_good_random_cell_and_symbol()
-        if cell == (-1,-1):
-            cell = board.choose_random_cell()
+        board.fix_cell()
 
-            if board[cell].symbol > 0:
-               board.fix_board_remove_symbol(cell)
 
-        else:
-            if board[cell].symbol == 0:
-                board.fix_board_add_symbol(cell, symbol, random_greedy=False)
-            else:
-                board.fix_board_change_symbol(cell, symbol)
 
 #input params are:
 # N     lambda      is_cluster      read_board
@@ -37,5 +30,5 @@ if _read_board:
 else:
     board = random_greedy(N=N, is_cluster=is_cluster, _lambda=_lambda)
 
-couples_metropolis_RLS(board)
+metropolis_RLS(board, _lambda)
 

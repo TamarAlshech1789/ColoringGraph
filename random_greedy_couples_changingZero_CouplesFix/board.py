@@ -15,36 +15,66 @@ class Board:
         self.max_cover_per = 0
         self.board = [[Cell(N, (j,i)) for i in range(N)] for j in range(N)]
         self.RG_empty_cells = list(np.ndindex(np.array(self.board).shape))
+        self.MMC_empty_cells = copy.deepcopy(self.RG_empty_cells)
+        self.empty_cells = copy.deepcopy(self.RG_empty_cells)
         self.all_cells = copy.deepcopy(self.RG_empty_cells)
         self.used_indices = []
-        self.good_cels = copy.deepcopy(self.RG_empty_cells)
+        #self.good_cels = copy.deepcopy(self.RG_empty_cells)
+        self.good_cells = []
+        self.init_good_cells()
+        self.good_cells_count = {}
+        self.good_cells_count[self.N] = list(np.ndindex(np.array(self.board).shape))
+
         self.start_time = timeit.default_timer()
         self._lambda = _lambda
 
         if is_cluster:
-            self.output_dir = '/cs/labs/nati/tamarals/'
+            self.output_dir = '/cs/labs/nati/tamarals/check_ChangingZero_CouplesFix'
         else:
             self.output_dir = 'Outputs/'
         if not os.path.isdir(self.output_dir):
             os.mkdir(self.output_dir)
 
         self.csv_file_name = self.output_dir
-        self.prog_csv_file_name = self.output_dir
         self.txt_file_name = self.output_dir
         self.set_file_names()
+
+    def init_good_cells(self):
+        symbols = list([(s + 1) for s in range(self.N)])
+
+        for cell in self.RG_empty_cells:
+            for symbol in symbols:
+                self.good_cells.append((cell, symbol))
 
     def set_file_names(self):
         self.csv_file_name += 'N_' + str(self.N) + '_lambda_' +str(self._lambda) + '.csv'
         if os.path.isfile(self.csv_file_name):
             os.remove(self.csv_file_name)
 
-        self.txt_file_name += '_priority_metropolis_board_N_' + str(self.N) + '_lambda_' + str(self._lambda) + '.txt'
-        self.prog_csv_file_name += ''
+        self.txt_file_name += 'metropolis_board_N_' + str(self.N) + '_lambda_' + str(self._lambda) + '.txt'
+
+    def update_good_cell_count(self, cell, prev_num_options, new_num_options):
+        if prev_num_options == new_num_options:
+            return
+        if prev_num_options > 0:
+            self.good_cells_count[prev_num_options].remove(cell)
+            if len(self.good_cells_count[prev_num_options]) == 0:
+                del self.good_cells_count[prev_num_options]
+
+        if new_num_options > 0:
+            if not new_num_options in self.good_cells_count:
+                self.good_cells_count[new_num_options] = []
+            self.good_cells_count[new_num_options].append(cell)
+
 
     def remove_optional_symbol(self, symbol, curr_cell, other_cell):
+        prev_num_options = len(self[curr_cell].optional_symbols)
         self[curr_cell].remove_optional_symbol(symbol, other_cell)
-        if curr_cell in self.good_cels and len(self[curr_cell].optional_symbols) < 1:
-            self.good_cels.remove(curr_cell)
+        if (curr_cell, symbol) in self.good_cells:
+            self.good_cells.remove((curr_cell, symbol))
+
+        num_options = len(self[curr_cell].optional_symbols)
+        self.update_good_cell_count(curr_cell, prev_num_options, num_options)
 
     def choose_random_empty_cell(self):
         cell = random.choice(self.RG_empty_cells)
@@ -53,19 +83,34 @@ class Board:
 
         return cell
 
+    def choose_random_used_cell(self):
+        cell = random.choice(self.used_indices)
+
+        return cell
+
     def choose_random_cell(self):
         cell = random.choice(self.all_cells)
         return cell
 
-    def choose_good_random_cell(self):
-        if len(self.good_cels) == 0:
-            return (-1,-1)
+    def choose_good_random_cell_and_symbol(self):
+        if len(self.good_cells) == 0:
+            return ((-1,-1), 0)
 
-        cell = random.choice(self.good_cels)
-        #while (self[cell].symbol != 0):
-        #    cell = random.choice(self.empty_cells)
+        (cell, symbol) = random.choice(self.good_cells)
+        return (cell, symbol)
 
-        return cell
+    def switch_empty_cell(self):
+        cell = random.choice(self.empty_cells)
+        symbols_list = self[cell].symbols_with_one_threat()
+        if len(symbols_list) == 0:
+            return False
+
+        symbol = random.choice(symbols_list)
+        switch_cell = self[cell].bad_symbols[symbol][0]
+
+        self.fix_board_remove_symbol(switch_cell)
+        self.fix_board_add_symbol(cell, symbol, random_greedy=False)
+        return True
 
     def print_solution(self, file=None):
         for i in range(self.N):
@@ -85,11 +130,14 @@ class Board:
 
     def set_cell(self, cell, symbol):
         self[cell].symbol = symbol
+        prev_num_options = len(self[cell].optional_symbols)
         if symbol in self[cell].optional_symbols:
             self[cell].optional_symbols.remove(symbol)
 
-        if cell in self.good_cels and len(self[cell].optional_symbols) == 0:
-            self.good_cels.remove(cell)
+        if (cell, symbol) in self.good_cells:
+            self.good_cells.remove((cell, symbol))
+        num_options = len(self[cell].optional_symbols)
+        self.update_good_cell_count(cell, prev_num_options, num_options)
 
     def __getitem__(self, cell):
         (row, col) = cell
@@ -98,6 +146,12 @@ class Board:
     def fix_board_add_symbol(self, cell, symbol, random_greedy = True):
         (row, col) = cell
         N = self.N
+
+        if cell in self.empty_cells:
+            self.empty_cells.remove(cell)
+        if not cell in self.used_indices:
+            self.used_indices.append(cell)
+
 
         for r in range(N):
             self.remove_optional_symbol(symbol, (r,col), cell)
@@ -152,14 +206,23 @@ class Board:
         #self.max_marked_cells = max(self.max_marked_cells, self.marked_cells)
 
     def remove_symbol(self, symbol, curr_cell, other_cell):
+        prev_num_options = len(self[curr_cell].optional_symbols)
         self[curr_cell].remove_cell_from_bad(symbol, other_cell)
-        if not curr_cell in self.good_cels and len(self[curr_cell].optional_symbols) >= 1:
-            self.good_cels.append(curr_cell)
+
+        if symbol in self[curr_cell].optional_symbols and not (curr_cell, symbol) in self.good_cells:
+            self.good_cells.append((curr_cell, symbol))
+        num_options = len(self[curr_cell].optional_symbols)
+        self.update_good_cell_count(curr_cell, prev_num_options, num_options)
 
     def fix_board_remove_symbol(self, cell):
         (row, col) = cell
         N = self.N
         symbol = self[cell].symbol
+
+        if not cell in self.empty_cells:
+            self.empty_cells.append(cell)
+        if  cell in self.used_indices:
+            self.used_indices.remove(cell)
 
         for r in range(N):
             self.remove_symbol(symbol, (r,col), cell)
@@ -191,10 +254,18 @@ class Board:
 
     def update_optional_symbol(self, prev_symbol, new_symbol, curr_cell, other_cell):
 
+        prev_num_options = len(self[curr_cell].optional_symbols)
         self[curr_cell].remove_cell_from_bad(prev_symbol, other_cell)
         self[curr_cell].remove_optional_symbol(new_symbol, other_cell)
-        if curr_cell in self.good_cels and len(self[curr_cell].optional_symbols) < 1:
-            self.good_cels.remove(curr_cell)
+
+        if prev_symbol in self[curr_cell].optional_symbols and not (curr_cell, prev_symbol) in self.good_cells:
+            self.good_cells.append((curr_cell, prev_symbol))
+        if (curr_cell, new_symbol) in self.good_cells:
+            self.good_cells.remove((curr_cell, new_symbol))
+		
+        num_options = len(self[curr_cell].optional_symbols)
+        self.update_good_cell_count(curr_cell, prev_num_options, num_options)
+
 
     def fix_board_change_symbol(self, cell, symbol):
         (row, col) = cell
@@ -248,7 +319,88 @@ class Board:
         np_board = self.get_np_board()
         return sum([list(line).count(0) for line in np_board])
 
-    def check_good_cells(self):
-        for cell in self.good_cels:
-            if len(self[cell].optional_symbols) ==0:
-                print('error with cell ', cell)
+    def fix_cell(self):
+        all_cells = False
+        if len(self.MMC_empty_cells) == 0:
+            cell = random.choice(self.all_cells)
+            self.MMC_empty_cells = copy.deepcopy(self.empty_cells)
+            all_cells = True
+        else:
+            cell = random.choice(self.MMC_empty_cells)
+        symbols_num_threats = {}
+
+        for symbol in list(range(1,self.N+1)):
+            if not symbol in self[cell].bad_symbols:
+                num = 0
+            else:
+                num = len(self[cell].bad_symbols[symbol])
+            if not num in symbols_num_threats:
+                symbols_num_threats[num] = []
+            if not self[cell].symbol == symbol:
+                symbols_num_threats[num].append(symbol)
+
+        symbols_num_threats = self.sort_directory(symbols_num_threats)
+
+        swap_symbol = False
+        for num_threat in symbols_num_threats:
+            swap_symbol = False
+            while swap_symbol == False and len(symbols_num_threats[num_threat]) > 0:
+                symbol = random.choice(symbols_num_threats[num_threat])
+                symbols_num_threats[num_threat].remove(symbol)
+                if not symbol in self[cell].bad_symbols:
+                    threat_cells = []
+                else:
+                    threat_cells = copy.deepcopy(self[cell].bad_symbols[symbol])
+
+                swap_symbol = True
+                for threat in threat_cells:
+                    if len(self[threat].optional_symbols) == 0:
+                        swap_symbol = False
+                        break
+
+                if swap_symbol == True:
+                    for threat in threat_cells:
+                        if len(self[threat].optional_symbols) == 0:
+                            swap_symbol = False
+                            break
+
+                        self.fix_board_change_symbol(threat, random.choice(self[threat].optional_symbols))
+
+                if swap_symbol == True:
+                    if self[cell].symbol == 0:
+                        self.fix_board_add_symbol(cell, symbol, random_greedy=False)
+                    else:
+                        self.fix_board_change_symbol(cell, symbol)
+                    self.MMC_empty_cells = copy.deepcopy(self.empty_cells)
+                    return
+
+        if all_cells == False and swap_symbol == False:
+            self.MMC_empty_cells.remove(cell)
+
+    def sort_directory(self, symbols_num_threats):
+        nums = [0,1,2,3,4]
+        symbols_num_threats_sort = {}
+        for num in nums:
+            if num in symbols_num_threats:
+                symbols_num_threats_sort[num] = symbols_num_threats[num]
+
+        return symbols_num_threats_sort
+
+    def check_board(self):
+        for r in range(self.N):
+            symbols = []
+            for c in range(self.N):
+                if self[(r,c)].symbol > 0 and self[(r,c)].symbol in symbols:
+                    print('error in row ', r)
+                    return False
+                symbols.append(self[(r,c)].symbol)
+
+        for c in range(self.N):
+            symbols = []
+            for r in range(self.N):
+                if self[(r,c)].symbol > 0 and self[(r,c)].symbol in symbols:
+                    print('error in col ', c)
+                    return False
+                symbols.append(self[(r,c)].symbol)
+
+        return True

@@ -32,6 +32,11 @@ class Cell:
         if not symbol in self.bad_symbols and not symbol in self.optional_symbols :
             self.optional_symbols.append(symbol)
 
+    def check_cell(self):
+        for symbol in self.bad_symbols:
+            if not symbol == self.symbol and len(self.bad_symbols[symbol]) == 0:
+                print('problem')
+
     def choose_random_symbol(self):
         if len(self.optional_symbols) == 0:
             return 0

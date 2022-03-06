@@ -164,7 +164,7 @@ class Board:
     def remove_symbol(self, symbol, curr_cell, other_cell):
         self[curr_cell].remove_cell_from_bad(symbol, other_cell)
 
-        if not (curr_cell, symbol) in self.good_cells:
+        if symbol in self[curr_cell].optional_symbols and not (curr_cell, symbol) in self.good_cells:
             self.good_cells.append((curr_cell, symbol))
 
     def fix_board_remove_symbol(self, cell):
