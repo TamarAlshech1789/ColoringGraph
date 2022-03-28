@@ -11,7 +11,7 @@ if plot_metropolis == True:
 else:
     general_csv_file_name = 'Outputs/randomGreedy_N_' + str(N) + '_lambda_'
 
-lambdas = [100, 400]
+lambdas = [1.1, 100, 400]
 """lambdas.append(1.1)
 for i in range(1,15):
     lambdas.append(2 ** i)"""

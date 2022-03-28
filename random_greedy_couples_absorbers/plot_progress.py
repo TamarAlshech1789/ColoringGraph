@@ -11,7 +11,7 @@ if plot_metropolis == True:
 else:
     general_csv_file_name = 'Outputs/randomGreedy_N_' + str(N) + '_lambda_'
 
-lambdas = [50, 400]
+lambdas = [100, 400]
 """lambdas.append(1.1)
 for i in range(1,15):
     lambdas.append(2 ** i)"""
@@ -67,6 +67,8 @@ print('worst lambda ', min_lambda, ' with pre. ', min_val_lambda)
 
 # Function add a legend
 plt.legend()
+title = 'best lambda = ' + str(max_lambda)
+plt.title(title )
 plt.xlabel('Time (min)')
 plt.ylabel('cover precent')
 

@@ -18,7 +18,6 @@ def random_greedy(N, is_cluster=False, _lambda = 0):
         else:
             board.fix_board_add_symbol(cell, symbol)
             board.RG_empty_cells.remove(cell)
-            board.used_indices.append(cell)
 
     board.print_solution()
     print('**************************************************')

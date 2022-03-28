@@ -3,3 +3,6 @@
 *.png
 random_greedy/__pycache__/
 *.out
+*.pyc
+*.sh
+*.pdf

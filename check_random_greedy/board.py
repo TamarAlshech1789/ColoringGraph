@@ -22,7 +22,7 @@ class Board:
         self._lambda = _lambda
 
         if is_cluster:
-            self.output_dir = '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/random_greedy/Outputs/'
+            self.output_dir = '/cs/labs/nati/tamarals/check_random_greedy_' + str(self.N) +'/'
         else:
             self.output_dir = 'Outputs/'
         if not os.path.isdir(self.output_dir):

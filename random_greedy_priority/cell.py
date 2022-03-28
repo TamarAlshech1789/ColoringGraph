@@ -28,7 +28,9 @@ class Cell:
 
         if symbol in self.bad_symbols and other_cell in self.bad_symbols[symbol]:
             self.bad_symbols[symbol].remove(other_cell)
-        if len(self.bad_symbols[symbol])==0 and not symbol in self.optional_symbols :
+            if len(self.bad_symbols[symbol]) == 0:
+                del self.bad_symbols[symbol]
+        if not symbol in self.bad_symbols and not symbol in self.optional_symbols :
             self.optional_symbols.append(symbol)
 
     def choose_random_symbol(self):

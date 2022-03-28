@@ -10,7 +10,6 @@ def random_greedy(N, is_cluster=False, _lambda = 0):
     board = Board(N, is_cluster, _lambda)
 
     while len(board.RG_empty_cells) > 0:
-        board.check_board()
         cell = board.choose_random_empty_cell()
         symbol = board[cell].choose_random_symbol()
 
@@ -19,8 +18,6 @@ def random_greedy(N, is_cluster=False, _lambda = 0):
         else:
             board.fix_board_add_symbol(cell, symbol)
             board.RG_empty_cells.remove(cell)
-            board.empty_cells.remove(cell)
-            board.used_indices.append(cell)
 
     board.print_solution()
     print('**************************************************')

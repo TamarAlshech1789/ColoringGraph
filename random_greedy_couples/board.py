@@ -25,13 +25,15 @@ class Board:
         self._lambda = _lambda
 
         if is_cluster:
-            self.output_dir = '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/random_greedy/Outputs/'
+            self.output_dir = '/cs/labs/nati/tamarals/Metropolis_Check_Progress/list_available_CellAndSymbol/'
         else:
             self.output_dir = 'Outputs/'
         if not os.path.isdir(self.output_dir):
             os.mkdir(self.output_dir)
 
         self.csv_file_name = self.output_dir
+        self.prog_csv_file_name = self.output_dir
+        self.prog_RG_csv_file_name = self.output_dir
         self.txt_file_name = self.output_dir
         self.set_file_names()
 
@@ -43,19 +45,26 @@ class Board:
                 self.good_cells.append((cell, symbol))
 
     def set_file_names(self):
-        self.csv_file_name += '_priority_N_' + str(self.N) + '_lambda_' +str(self._lambda) + '.csv'
+        self.csv_file_name += 'N_' + str(self.N) + '_lambda_' +str(self._lambda) + '.csv'
         if os.path.isfile(self.csv_file_name):
             os.remove(self.csv_file_name)
 
-        self.txt_file_name += '_priority_metropolis_board_N_' + str(self.N) + '_lambda_' + str(self._lambda) + '.txt'
+        self.txt_file_name += 'metropolis_board_N_' + str(self.N) + '_lambda_' + str(self._lambda) + '.txt'
+        if os.path.isfile(self.txt_file_name):
+            os.remove(self.txt_file_name)
+
+        self.prog_csv_file_name += 'prog_N_' + str(self.N) + '_lambda_' +str(self._lambda) + '.csv'
+        if os.path.isfile(self.prog_csv_file_name):
+            os.remove(self.prog_csv_file_name)
+
+        self.prog_RG_csv_file_name += 'randomGreedy_N_' + str(self.N) + '_lambda_' + str(self._lambda) + '.csv'
+        if os.path.isfile(self.prog_RG_csv_file_name):
+            os.remove(self.prog_RG_csv_file_name)
 
     def remove_optional_symbol(self, symbol, curr_cell, other_cell):
         self[curr_cell].remove_optional_symbol(symbol, other_cell)
         if (curr_cell, symbol) in self.good_cells:
             self.good_cells.remove((curr_cell, symbol))
-
-        #if curr_cell in self.good_cels and len(self[curr_cell].optional_symbols) < 1:
-        #    self.good_cels.remove(curr_cell)
 
     def choose_random_empty_cell(self):
         cell = random.choice(self.RG_empty_cells)
@@ -66,6 +75,11 @@ class Board:
 
     def choose_random_cell(self):
         cell = random.choice(self.all_cells)
+        return cell
+
+    def choose_random_used_cell(self):
+        cell = random.choice(self.used_indices)
+
         return cell
 
     def choose_good_random_cell_and_symbol(self):
@@ -98,8 +112,6 @@ class Board:
 
         if (cell, symbol) in self.good_cells:
             self.good_cells.remove((cell, symbol))
-        #if cell in self.good_cels and len(self[cell].optional_symbols) == 0:
-        #    self.good_cels.remove(cell)
 
     def __getitem__(self, cell):
         (row, col) = cell
@@ -108,6 +120,9 @@ class Board:
     def fix_board_add_symbol(self, cell, symbol, random_greedy = True):
         (row, col) = cell
         N = self.N
+
+        if not cell in self.used_indices:
+            self.used_indices.append(cell)
 
         for r in range(N):
             self.remove_optional_symbol(symbol, (r,col), cell)
@@ -137,6 +152,12 @@ class Board:
         self.set_cell(cell, symbol)
         self.marked_cells += 1
 
+        if random_greedy == False:
+            self.save_prog(self.prog_csv_file_name)
+        else:
+            self.save_prog(self.prog_RG_csv_file_name)
+
+        """
         if random_greedy==False and self.max_marked_cells < self.marked_cells:
             cover_per = float(100 * self.marked_cells) / N ** 2
             if (cover_per - self.max_cover_per) >= 0.2:
@@ -158,8 +179,7 @@ class Board:
                 self.max_cover_per = cover_per
 
             self.max_marked_cells = self.marked_cells
-
-        #self.max_marked_cells = max(self.max_marked_cells, self.marked_cells)
+        """
 
     def remove_symbol(self, symbol, curr_cell, other_cell):
         self[curr_cell].remove_cell_from_bad(symbol, other_cell)
@@ -172,6 +192,9 @@ class Board:
         N = self.N
         symbol = self[cell].symbol
 
+        if  cell in self.used_indices:
+            self.used_indices.remove(cell)
+			
         for r in range(N):
             self.remove_symbol(symbol, (r,col), cell)
         for c in range(N):
@@ -199,6 +222,8 @@ class Board:
 
         self.set_cell(cell, 0)
         self.marked_cells -= 1
+
+        self.save_prog(self.prog_csv_file_name)
 
     def update_optional_symbol(self, prev_symbol, new_symbol, curr_cell, other_cell):
 
@@ -261,3 +286,9 @@ class Board:
     def find_empty_cells(self):
         np_board = self.get_np_board()
         return sum([list(line).count(0) for line in np_board])
+
+    def save_prog(self, file_name):
+        cover_per = float(100 * self.marked_cells) / self.N ** 2
+        with open(file_name, 'a') as csv_file:
+            csv_writer = csv.writer(csv_file)
+            csv_writer.writerow([timeit.default_timer() - self.start_time, cover_per])
