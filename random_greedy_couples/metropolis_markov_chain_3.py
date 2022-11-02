@@ -30,7 +30,7 @@ N = int(sys.argv[1])
 _lambda = float(sys.argv[2])
 #_lambda = N ** 2
 #is_cluster = sys.argv[3] == '1'
-is_cluster = True
+is_cluster = False
 #_read_board = sys.argv[4] == '1'
 _read_board = False
 

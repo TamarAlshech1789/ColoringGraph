@@ -7,6 +7,7 @@ class Cell:
         self.symbol = symbol
         self.optional_symbols = list([(s + 1) for s in range(N)])
         self.bad_symbols = {}
+        self.num_optional = len(self.optional_symbols)
 
     def remove_optional_symbol(self, symbol, other_cell):
         if self.cell == other_cell:

@@ -3,7 +3,7 @@ import csv
 import random
 import copy
 import timeit
-import os
+import os, os.path
 from cell import Cell
 
 
@@ -161,7 +161,7 @@ class Board:
         else:
             self.save_prog(self.prog_RG_csv_file_name)
 
-        """
+
         if random_greedy==False and self.max_marked_cells < self.marked_cells:
             cover_per = float(100 * self.marked_cells) / N ** 2
             if (cover_per - self.max_cover_per) >= 0.2:
@@ -169,21 +169,23 @@ class Board:
                     csv_writer = csv.writer(csv_file)
                     csv_writer.writerow([timeit.default_timer() - self.start_time, cover_per])
 
-                if float(100 * self.marked_cells) / N ** 2 > 90:
-                    file = open(self.txt_file_name, 'a')
+                if float(100 * self.marked_cells) / N ** 2 > 50 and int(cover_per * 100) % 10 - int( self.max_cover_per* 100) % 10 >= 1:
 
-                    file.write(str(cover_per) + ' per.         at time ' + str(timeit.default_timer() - self.start_time) + '\n')
-                    if int(cover_per * 100) % 10 - int( self.max_cover_per* 100) % 10 >= 1:
-                        file.write('*****************************************************\n')
-                        file.write('board with ' + str(int(cover_per)) + ' per cover:\n')
-                        self.print_solution(file)
-                        file.write('*****************************************************\n')
-                    file.close()
+                        self.print_current_board(cover_per)
 
                 self.max_cover_per = cover_per
 
             self.max_marked_cells = self.marked_cells
-        """
+
+    def print_current_board(self, cover_per):
+        if os.path.isfile(self.txt_file_name):
+            os.remove(self.txt_file_name)
+
+        file = open(self.txt_file_name, 'a')
+
+        file.write('board with ' + str(int(cover_per)) + ' per cover:\n')
+        self.print_solution(file)
+        file.close()
 
     def remove_symbol(self, symbol, curr_cell, other_cell):
         self[curr_cell].remove_cell_from_bad(symbol, other_cell)

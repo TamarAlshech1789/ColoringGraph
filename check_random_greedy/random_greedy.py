@@ -1,6 +1,4 @@
 from board import Board
-import sys
-import csv
 
 def random_greedy(N, is_cluster=True, _lambda = 0):
     # Get a list of indices for an array of this shape#Get a list of indices for an array of this shape
@@ -20,8 +18,14 @@ def random_greedy(N, is_cluster=True, _lambda = 0):
 
     #board.print_solution()
     #print('**************************************************')
-    return board.marked_cells
+    return board
 
+board = random_greedy(20, is_cluster = False)
+print('number of empty cells - ', board.N**2 - board.marked_cells)
+board.print_solution()
+board.check_pandiagonals()
+
+"""
 N = int(sys.argv[1])
 num_repeats = 100
 csv_file_name = '/cs/usr/tamarals/Documents/N_queens_problem/ColoringGraph/check_random_greedy/results.csv'
@@ -31,3 +35,4 @@ for repeat in num_repeats:
     with open(csv_file_name, 'a') as csv_file:
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow([int(repeat), cover_per])
+"""

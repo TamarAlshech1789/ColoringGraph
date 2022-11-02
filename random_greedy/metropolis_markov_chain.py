@@ -3,6 +3,7 @@ import sys
 from board import Board
 from read_board import read_board
 from random_greedy import random_greedy
+import timeit
 
 def metropolis_RLS(board, _lambda):
     N = board.N
@@ -39,5 +40,6 @@ if _read_board:
 else:
     board = random_greedy(N=N, is_cluster=is_cluster, _lambda=_lambda)
 
+board.start_time = timeit.default_timer()
 metropolis_RLS(board, _lambda)
 

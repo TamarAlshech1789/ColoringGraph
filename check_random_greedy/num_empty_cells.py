@@ -36,7 +36,7 @@ num_zeros = []
 log_num_zeros = []
 
 
-fig, axs = plt.subplots(2, 1)
+#fig, axs = plt.subplots(1, 1)
 
 for N in N_list:
     txt_file_name = str(N) + '.txt'
@@ -46,8 +46,8 @@ for N in N_list:
         log_num_zeros.append(math.log(round(N**2 * (1 - single_cover_per / 100))))
         num_zeros.append(round(N ** 2 * (1 - single_cover_per / 100)))
 
-axs[0].plot(N_list, log_num_zeros, color='green', linestyle='dashed', linewidth = 3,
-         marker='o', markerfacecolor='blue', markersize=12, label='real_data')
+#axs[0].plot(N_list, log_num_zeros, color='green', linestyle='dashed', linewidth = 3,
+#         marker='o', markerfacecolor='blue', markersize=12, label='real_data')
 
 N_list = np.array(N_list)
 num_zeros = np.array(num_zeros)
@@ -59,18 +59,20 @@ x = np.array(range(10,1000))
 
 title = "log_num_of_zeros(n) =  " + str(round(popt[0], 2)) + ' * log(n) + ' + str(round(popt[1], 2))
 
-axs[0].plot(x, func_log(x, *popt), 'r-', label=title)
-axs[0].legend()
+#axs[0].plot(x, func_log(x, *popt), 'r-', label=title)
+#axs[0].legend()
 
 #secong image
-title = "num_of_zeros(n) =  (e ^ " + str(round(popt[1], 2)) + ') * (n ^ ' + str(round(popt[0], 2)) + ')'
-axs[1].plot(N_list, num_zeros, color='green', linestyle='dashed', linewidth = 3,
+title = "num_of_empty(n) =  (e ^ " + str(round(popt[1], 2)) + ') * (n ^ ' + str(round(popt[0], 2)) + ')'
+plt.plot(N_list, num_zeros, color='green', linestyle='dashed', linewidth = 3,
          marker='o', markerfacecolor='blue', markersize=12, label='real_data')
-axs[1].plot(x, func_log_to_exp(x, *popt), 'r-', label=title)
-axs[1].legend()
-
-axs.flat[0].set(ylabel = 'log num of zeros')
-axs.flat[1].set(xlabel = 'N', ylabel = 'num of zeros')
+plt.plot(x, func_log_to_exp(x, *popt), 'r-', label=title)
+plt.legend()
+plt.title('approximation to number of empty cells after random greedy algorithm')
+plt.xlabel('N')
+plt.ylabel('num of zeros')
+#axs.flat[0].set(ylabel = 'log num of zeros')
+#axs.flat[1].set(xlabel = 'N', ylabel = 'num of zeros')
 
 #save image
 plt.savefig('num of zeros logaritmic scale.png')

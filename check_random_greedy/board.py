@@ -93,34 +93,45 @@ class Board:
         (row, col) = cell
         return self.board[row][col]
 
-    def fix_board_add_symbol(self, cell, symbol, random_greedy = True):
+    def fix_board_add_symbol(self, cell, symbol, random_greedy = True, torus = False):
         (row, col) = cell
         N = self.N
 
-        for r in range(N):
-            self.remove_optional_symbol(symbol, (r,col), cell)
-        for c in range(N):
-            self.remove_optional_symbol(symbol, (row,c), cell)
+        if not torus:
+            for r in range(N):
+                self.remove_optional_symbol(symbol, (r,col), cell)
+            for c in range(N):
+                self.remove_optional_symbol(symbol, (row,c), cell)
 
-        # Check left diagonal on upeer side
-        for i, j in zip(range(row, -1, -1),
-                        range(col, -1, -1)):
-            self.remove_optional_symbol(symbol, (i,j), cell)
+            # Check left diagonal on upeer side
+            for i, j in zip(range(row, -1, -1),
+                            range(col, -1, -1)):
+                self.remove_optional_symbol(symbol, (i,j), cell)
 
-        # Check left diagonal on lower side
-        for i, j in zip(range(row, N, 1),
-                        range(col, -1, -1)):
-            self.remove_optional_symbol(symbol, (i,j), cell)
+            # Check left diagonal on lower side
+            for i, j in zip(range(row, N, 1),
+                            range(col, -1, -1)):
+                self.remove_optional_symbol(symbol, (i,j), cell)
 
-        # Check right diagonal on upper side
-        for i, j in zip(range(row, -1, -1),
-                        range(col, N, 1)):
-            self.remove_optional_symbol(symbol, (i,j), cell)
+            # Check right diagonal on upper side
+            for i, j in zip(range(row, -1, -1),
+                            range(col, N, 1)):
+                self.remove_optional_symbol(symbol, (i,j), cell)
 
-        # Check right diagonal on upper side
-        for i, j in zip(range(row, N, 1),
-                        range(col, N, 1)):
-            self.remove_optional_symbol(symbol, (i,j), cell)
+            # Check right diagonal on upper side
+            for i, j in zip(range(row, N, 1),
+                            range(col, N, 1)):
+                self.remove_optional_symbol(symbol, (i,j), cell)
+
+        else:
+            for i in range(1, N):
+                #col
+                self.remove_optional_symbol(symbol, ((row + i) % N, col), cell)
+                #row
+                self.remove_optional_symbol(symbol, (row, (col + i) % N), cell)
+                #diagonals
+                self.remove_optional_symbol(symbol, ((row + i) % N, (col + i) % N), cell)
+                self.remove_optional_symbol(symbol, ((row - i) % N, (col + i) % N), cell)
 
         self.set_cell(cell, symbol)
         self.marked_cells += 1
@@ -250,3 +261,30 @@ class Board:
         for cell in self.good_cels:
             if len(self[cell].optional_symbols) ==0:
                 print('error with cell ', cell)
+
+    def check_pandiagonals(self):
+        N = self.N
+
+        # Check left diagonals
+        for row in range(N):
+            diag_symbols = []
+            for i in range(N):
+                cell = ((row + i)%N, i%N)
+                symbol = self[cell].symbol
+                if symbol > 0:
+                    if symbol in diag_symbols:
+                        print('not a PLS!')
+                        return
+                    diag_symbols.append(symbol)
+
+        # Check right diagonals
+        for row in range(N):
+            diag_symbols = []
+            for i in range(N):
+                cell = ((row - i)%N, i%N)
+                symbol = self[cell].symbol
+                if symbol > 0:
+                    if symbol in diag_symbols:
+                        print('not a PLS!')
+                        return
+                    diag_symbols.append(symbol)

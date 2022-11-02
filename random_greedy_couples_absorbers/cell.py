@@ -6,6 +6,7 @@ class Cell:
         self.cell = cell
         self.symbol = symbol
         self.optional_symbols = list([(s + 1) for s in range(N)])
+        self.num_optional = len(self.optional_symbols)
         self.bad_symbols = {}
 
     def remove_optional_symbol(self, symbol, other_cell):
@@ -41,3 +42,11 @@ class Cell:
         if len(self.optional_symbols) == 0:
             return 0
         return random.choice(self.optional_symbols)
+
+    def symbols_with_one_threat(self):
+        symbol_list = []
+        for symbol in self.bad_symbols:
+            if  len(self.bad_symbols[symbol]) == 1:
+                symbol_list.append(symbol)
+
+        return symbol_list
